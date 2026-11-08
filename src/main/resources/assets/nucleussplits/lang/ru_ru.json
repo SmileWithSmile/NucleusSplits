@@ -1,0 +1,12 @@
+{
+  "nucleussplits.command.help": "Команды: /nc gui, /nc reset, /nc preview",
+  "nucleussplits.command.reset": "Порядок и текущий ран сброшены. Выйди из Crystal Nucleus, чтобы начать обучение.",
+  "nucleussplits.command.position": "Позиция HUD: %s, %s",
+  "nucleussplits.command.scale": "Масштаб HUD: %s%%",
+  "nucleussplits.command.preview.on": "Предпросмотр HUD включён.",
+  "nucleussplits.command.preview.off": "Предпросмотр HUD выключен.",
+  "nucleussplits.gui.title": "Редактор позиции Nucleus Splits",
+  "nucleussplits.gui.drag": "Перетаскивай окно сплитов левой кнопкой мыши",
+  "nucleussplits.gui.scroll": "Крути колёсико над окном для масштаба — %s%%",
+  "nucleussplits.gui.reset": "Правая кнопка сбрасывает позицию и масштаб"
+}

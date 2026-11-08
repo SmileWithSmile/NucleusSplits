@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "nucleussplits",
+  "version": "${version}",
+  "name": "Nucleus Splits",
+  "description": "Split timer for repeated Crystal Nucleus runs.",
+  "authors": [
+    "kmsold"
+  ],
+  "license": "All-Rights-Reserved",
+  "icon": "assets/nucleussplits/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "me.kmsold.nucleussplits.NucleusSplits"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=${fabricLoader}",
+    "fabric-api": "*",
+    "java": ">=25",
+    "minecraft": "~26.1"
+  }
+}

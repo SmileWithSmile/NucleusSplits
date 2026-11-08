@@ -1,0 +1,12 @@
+{
+  "nucleussplits.command.help": "Commands: /nc gui, /nc reset, /nc preview",
+  "nucleussplits.command.reset": "Route and current run reset. Leave the Crystal Nucleus to start learning.",
+  "nucleussplits.command.position": "HUD position: %s, %s",
+  "nucleussplits.command.scale": "HUD scale: %s%%",
+  "nucleussplits.command.preview.on": "HUD preview enabled.",
+  "nucleussplits.command.preview.off": "HUD preview disabled.",
+  "nucleussplits.gui.title": "Nucleus Splits Position Editor",
+  "nucleussplits.gui.drag": "Drag the splits with left mouse button",
+  "nucleussplits.gui.scroll": "Scroll over it to resize — %s%%",
+  "nucleussplits.gui.reset": "Right-click the splits to reset position and scale"
+}
