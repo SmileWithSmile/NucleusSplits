@@ -12,17 +12,22 @@ final class NucleusConfigScreen extends Screen {
     private static final int GOLD = 0xFFFFAA00;
     private final NucleusRunTracker tracker;
     private final ModSettings settings;
+    private final LifetimeStatsStore.Snapshot session;
     private final LifetimeStatsStore.Snapshot lifetime;
+    private final Screen parent;
     private boolean dragging;
     private double grabX;
     private double grabY;
 
     NucleusConfigScreen(NucleusRunTracker tracker, ModSettings settings,
-                        LifetimeStatsStore.Snapshot lifetime) {
+                        LifetimeStatsStore.Snapshot session,
+                        LifetimeStatsStore.Snapshot lifetime, Screen parent) {
         super(Component.translatable("nucleussplits.gui.title"));
         this.tracker = tracker;
         this.settings = settings;
+        this.session = session;
         this.lifetime = lifetime;
+        this.parent = parent;
     }
 
     @Override
@@ -44,7 +49,8 @@ final class NucleusConfigScreen extends Screen {
                 width / 2, 36, 0xFFAAAAAA);
         graphics.centeredText(font, Component.translatable("nucleussplits.gui.reset"), width / 2, 48, 0xFFAAAAAA);
 
-        NucleusSplitsHud.render(graphics, tracker, settings, true, NucleusSplits.now(), lifetime, false);
+        NucleusSplitsHud.render(graphics, tracker, settings, true, NucleusSplits.now(),
+                session, lifetime, false, settings.runProfile);
         if (inside(mouseX, mouseY)) {
             int x2 = settings.x + NucleusSplitsHud.scaledWidth(settings);
             int y2 = settings.y + NucleusSplitsHud.scaledHeight(settings, false);
@@ -128,7 +134,7 @@ final class NucleusConfigScreen extends Screen {
     @Override
     public void onClose() {
         SettingsStore.save(settings);
-        minecraft.setScreen(null);
+        minecraft.setScreen(parent);
     }
 
     @Override

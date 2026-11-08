@@ -25,11 +25,15 @@ public final class NucleusSplits implements ClientModInitializer {
     private static final NucleusRunTracker TRACKER = new NucleusRunTracker();
     private static ModSettings settings;
     private static LifetimeStatsStore lifetimeStore;
+    private static final SessionStatsStore SESSION_STATS = new SessionStatsStore();
+    private static LifetimeStatsStore.Snapshot sessionComparison = LifetimeStatsStore.Snapshot.empty();
     private static LifetimeStatsStore.Snapshot lifetimeComparison = LifetimeStatsStore.Snapshot.empty();
+    private static String activeRunProfile;
     private static Boolean wasInNucleus;
     private static String serverKey;
     private static int waitingForCrystalNameTicks;
     private static boolean preview;
+    private static boolean openMenu;
     private static boolean openGui;
     private static long clientTicks;
     private static long partyPbCooldownUntil;
@@ -46,12 +50,12 @@ public final class NucleusSplits implements ClientModInitializer {
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> resetConnection());
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> resetConnection());
         ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
-            if (screen instanceof NucleusConfigScreen) return;
+            if (screen instanceof NucleusConfigScreen || screen instanceof NucleusSettingsScreen) return;
             ScreenMouseEvents.allowMouseClick(screen).register((ignored, click) ->
                     !NucleusSplitsHud.handleViewClick(click.x(), click.y(), click.button(), TRACKER, settings, preview));
             ScreenEvents.afterExtract(screen).register((ignored, graphics, mouseX, mouseY, delta) ->
                     NucleusSplitsHud.render(graphics, TRACKER, settings, preview, now(),
-                            lifetimeComparison, true));
+                            sessionComparison, lifetimeComparison, true, displayProfile()));
         });
         HudElementRegistry.attachElementBefore(
                 VanillaHudElements.DEMO_TIMER,
@@ -60,7 +64,7 @@ public final class NucleusSplits implements ClientModInitializer {
                     Minecraft client = Minecraft.getInstance();
                     if (client.screen != null) return;
                     NucleusSplitsHud.render(graphics, TRACKER, settings, preview, now(),
-                            lifetimeComparison, false);
+                            sessionComparison, lifetimeComparison, false, displayProfile());
                 }
         );
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
@@ -74,7 +78,14 @@ public final class NucleusSplits implements ClientModInitializer {
     private static com.mojang.brigadier.builder.LiteralArgumentBuilder<net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource>
     commands(String root) {
         return ClientCommands.literal(root)
-                .executes(context -> { tell("nucleussplits.command.help"); return 1; })
+                .executes(context -> {
+                    openMenu = true;
+                    return 1;
+                })
+                .then(ClientCommands.literal("menu").executes(context -> {
+                    openMenu = true;
+                    return 1;
+                }))
                 .then(ClientCommands.literal("gui").executes(context -> {
                     openGui = true;
                     return 1;
@@ -82,6 +93,7 @@ public final class NucleusSplits implements ClientModInitializer {
                 .then(ClientCommands.literal("reset").executes(context -> {
                     TRACKER.resetLobby();
                     wasInNucleus = null;
+                    activeRunProfile = null;
                     tell("nucleussplits.command.reset");
                     return 1;
                 }))
@@ -114,10 +126,16 @@ public final class NucleusSplits implements ClientModInitializer {
         clientTicks++;
         if (waitingForCrystalNameTicks > 0) waitingForCrystalNameTicks--;
         sendPendingPartyPb(client);
+        if (openMenu) {
+            openMenu = false;
+            refreshComparisons(settings.runProfile);
+            client.setScreen(new NucleusSettingsScreen(settings, SESSION_STATS, lifetimeStore));
+        }
         if (openGui) {
             openGui = false;
-            lifetimeComparison = lifetimeStore.snapshot(settings.runProfile);
-            client.setScreen(new NucleusConfigScreen(TRACKER, settings, lifetimeComparison));
+            refreshComparisons(settings.runProfile);
+            client.setScreen(new NucleusConfigScreen(TRACKER, settings,
+                    sessionComparison, lifetimeComparison, null));
         }
         if (client.player == null || client.level == null) return;
 
@@ -125,14 +143,19 @@ public final class NucleusSplits implements ClientModInitializer {
         if (currentServer != null && serverKey != null && !currentServer.equals(serverKey)) {
             LOGGER.info("Crystal Hollows server changed: {} -> {}; forgetting learned route", serverKey, currentServer);
             TRACKER.resetLobby();
+            SESSION_STATS.reset();
             wasInNucleus = null;
+            activeRunProfile = null;
+            refreshComparisons(settings.runProfile);
         }
         if (currentServer != null) serverKey = currentServer;
         if (!SkyBlockContext.isSkyBlock(client)) return;
 
         boolean inside = NucleusArea.contains(client.player.getX(), client.player.getY(), client.player.getZ());
-        if (Boolean.TRUE.equals(wasInNucleus) && !inside) {
-            lifetimeComparison = lifetimeStore.snapshot(settings.runProfile);
+        if (Boolean.TRUE.equals(wasInNucleus) && !inside
+                && TRACKER.state() != NucleusRunTracker.State.RUNNING) {
+            activeRunProfile = JadeProfile.fromKey(settings.runProfile).key();
+            refreshComparisons(activeRunProfile);
             TRACKER.onNucleusExit(now());
             LOGGER.info("Nucleus run {} started on area exit", TRACKER.runNumber());
         }
@@ -172,7 +195,10 @@ public final class NucleusSplits implements ClientModInitializer {
             if (TRACKER.onNucleusCompleted(now())) {
                 LOGGER.info("Nucleus run {} finished: crystals={} clean={} mismatch={}", TRACKER.runNumber(),
                         TRACKER.observedOrder(), TRACKER.cleanFinish(), TRACKER.routeMismatch());
-                lifetimeStore.record(TRACKER, settings.runProfile);
+                String profile = activeRunProfile == null ? settings.runProfile : activeRunProfile;
+                SESSION_STATS.record(TRACKER, profile);
+                lifetimeStore.record(TRACKER, profile);
+                updateDisplayedRunStats(profile);
             }
         }
         return true;
@@ -187,12 +213,15 @@ public final class NucleusSplits implements ClientModInitializer {
 
     private static void resetConnection() {
         TRACKER.resetLobby();
+        SESSION_STATS.reset();
         wasInNucleus = null;
+        activeRunProfile = null;
         serverKey = null;
         waitingForCrystalNameTicks = 0;
         partyPbReplyAt = -1;
         pendingPartyPbReply = null;
         partyPbCooldownUntil = 0;
+        if (lifetimeStore != null && settings != null) refreshComparisons(settings.runProfile);
     }
 
     private static void schedulePartyPbReply() {
@@ -217,6 +246,42 @@ public final class NucleusSplits implements ClientModInitializer {
 
     static long now() {
         return System.nanoTime() / 1_000_000L;
+    }
+
+    static NucleusRunTracker tracker() {
+        return TRACKER;
+    }
+
+    static void profileChanged() {
+        settings.runProfile = JadeProfile.fromKey(settings.runProfile).key();
+        SettingsStore.save(settings);
+        if (TRACKER.state() != NucleusRunTracker.State.RUNNING) {
+            activeRunProfile = null;
+            refreshComparisons(settings.runProfile);
+        }
+    }
+
+    private static void refreshComparisons(String profile) {
+        sessionComparison = SESSION_STATS.snapshot(profile);
+        lifetimeComparison = lifetimeStore.snapshot(profile);
+    }
+
+    private static void updateDisplayedRunStats(String profile) {
+        LifetimeStatsStore.Snapshot sessionUpdated = SESSION_STATS.snapshot(profile);
+        LifetimeStatsStore.Snapshot lifetimeUpdated = lifetimeStore.snapshot(profile);
+        sessionComparison = withUpdatedTotals(sessionComparison, sessionUpdated);
+        lifetimeComparison = withUpdatedTotals(lifetimeComparison, lifetimeUpdated);
+    }
+
+    private static LifetimeStatsStore.Snapshot withUpdatedTotals(
+            LifetimeStatsStore.Snapshot comparison, LifetimeStatsStore.Snapshot updated) {
+        return new LifetimeStatsStore.Snapshot(
+                comparison.segments(), comparison.nucleusSegment(), updated.fullRun(),
+                updated.averageRun(), updated.runs());
+    }
+
+    private static String displayProfile() {
+        return activeRunProfile == null ? settings.runProfile : activeRunProfile;
     }
 
     private static void tell(String key, Object... args) {

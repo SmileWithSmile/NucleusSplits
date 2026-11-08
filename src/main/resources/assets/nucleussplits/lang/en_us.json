@@ -1,5 +1,5 @@
 {
-  "nucleussplits.command.help": "Commands: /nc gui, /nc reset, /nc preview",
+  "nucleussplits.command.help": "Commands: /nucleussplits, /nc gui, /nc reset, /nc preview",
   "nucleussplits.command.reset": "Route and current run reset. Leave the Crystal Nucleus to start learning.",
   "nucleussplits.command.position": "HUD position: %s, %s",
   "nucleussplits.command.scale": "HUD scale: %s%%",
@@ -8,5 +8,17 @@
   "nucleussplits.gui.title": "Nucleus Splits Position Editor",
   "nucleussplits.gui.drag": "Drag the splits with left mouse button",
   "nucleussplits.gui.scroll": "Scroll over it to resize — %s%%",
-  "nucleussplits.gui.reset": "Right-click the splits to reset position and scale"
+  "nucleussplits.gui.reset": "Right-click the splits to reset position and scale",
+  "nucleussplits.menu.title": "Nucleus Splits",
+  "nucleussplits.menu.subtitle": "Settings and run statistics",
+  "nucleussplits.menu.jade_mode": "Jade route: %s",
+  "nucleussplits.menu.hud_view": "HUD comparison: %s",
+  "nucleussplits.menu.session_avg": "Session average run",
+  "nucleussplits.menu.alltime_avg": "All-time average run",
+  "nucleussplits.menu.no_runs": "No completed runs",
+  "nucleussplits.menu.edit_hud": "Edit HUD position and scale",
+  "nucleussplits.profile.prepared": "Prepared materials",
+  "nucleussplits.profile.in_run": "Collect materials during run",
+  "nucleussplits.view.session": "Session",
+  "nucleussplits.view.alltime": "All-time"
 }

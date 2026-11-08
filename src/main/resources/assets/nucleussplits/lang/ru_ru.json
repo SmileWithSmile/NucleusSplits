@@ -1,5 +1,5 @@
 {
-  "nucleussplits.command.help": "Команды: /nc gui, /nc reset, /nc preview",
+  "nucleussplits.command.help": "Команды: /nucleussplits, /nc gui, /nc reset, /nc preview",
   "nucleussplits.command.reset": "Порядок и текущий ран сброшены. Выйди из Crystal Nucleus, чтобы начать обучение.",
   "nucleussplits.command.position": "Позиция HUD: %s, %s",
   "nucleussplits.command.scale": "Масштаб HUD: %s%%",
@@ -8,5 +8,17 @@
   "nucleussplits.gui.title": "Редактор позиции Nucleus Splits",
   "nucleussplits.gui.drag": "Перетаскивай окно сплитов левой кнопкой мыши",
   "nucleussplits.gui.scroll": "Крути колёсико над окном для масштаба — %s%%",
-  "nucleussplits.gui.reset": "Правая кнопка сбрасывает позицию и масштаб"
+  "nucleussplits.gui.reset": "Правая кнопка сбрасывает позицию и масштаб",
+  "nucleussplits.menu.title": "Nucleus Splits",
+  "nucleussplits.menu.subtitle": "Настройки и статистика ранов",
+  "nucleussplits.menu.jade_mode": "Маршрут Jade: %s",
+  "nucleussplits.menu.hud_view": "Сравнение в HUD: %s",
+  "nucleussplits.menu.session_avg": "Среднее время за сессию",
+  "nucleussplits.menu.alltime_avg": "Среднее время за всё время",
+  "nucleussplits.menu.no_runs": "Нет завершённых ранов",
+  "nucleussplits.menu.edit_hud": "Позиция и масштаб HUD",
+  "nucleussplits.profile.prepared": "Материалы подготовлены",
+  "nucleussplits.profile.in_run": "Материалы собираются в ране",
+  "nucleussplits.view.session": "Сессия",
+  "nucleussplits.view.alltime": "Всё время"
 }

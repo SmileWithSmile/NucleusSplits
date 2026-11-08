@@ -6,6 +6,5 @@ public final class ModSettings {
     public int scalePercent = 100;
     public StatsView statsView = StatsView.SESSION;
 
-    /** Reserved for a future Prepared Jade / In-run Jade split without changing the save format. */
-    public String runProfile = "unclassified";
+    public String runProfile = JadeProfile.PREPARED.key();
 }

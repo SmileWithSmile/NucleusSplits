@@ -22,7 +22,7 @@ public final class SettingsStore {
             ModSettings settings = GSON.fromJson(reader, ModSettings.class);
             if (settings == null) return new ModSettings();
             if (settings.statsView == null) settings.statsView = StatsView.SESSION;
-            if (settings.runProfile == null || settings.runProfile.isBlank()) settings.runProfile = "unclassified";
+            settings.runProfile = JadeProfile.fromKey(settings.runProfile).key();
             settings.scalePercent = Math.clamp(settings.scalePercent, 50, 200);
             return settings;
         } catch (Exception exception) {

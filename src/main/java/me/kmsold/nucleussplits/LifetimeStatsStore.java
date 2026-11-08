@@ -47,12 +47,14 @@ public final class LifetimeStatsStore {
     }
 
     public Snapshot snapshot(String profile) {
+        String canonicalProfile = JadeProfile.fromKey(profile).key();
         EnumMap<Crystal, Long> segments = new EnumMap<>(Crystal.class);
         long nucleus = 0;
         long fullRun = 0;
+        long totalTime = 0;
         int count = 0;
         for (StoredRun run : data.runs) {
-            if (!profile.equals(run.profile)) continue;
+            if (!matchesProfile(canonicalProfile, run.profile)) continue;
             count++;
             if (run.segments != null) {
                 for (Crystal crystal : Crystal.values()) {
@@ -62,15 +64,17 @@ public final class LifetimeStatsStore {
             }
             nucleus = minPositive(nucleus, run.nucleusSegment);
             fullRun = minPositive(fullRun, run.totalTime);
+            totalTime += Math.max(0, run.totalTime);
         }
-        return new Snapshot(segments, nucleus, fullRun, count);
+        long averageRun = count == 0 ? 0 : totalTime / count;
+        return new Snapshot(segments, nucleus, fullRun, averageRun, count);
     }
 
     public void record(NucleusRunTracker tracker, String profile) {
         if (!tracker.cleanFinish() || tracker.state() != NucleusRunTracker.State.FINISHED) return;
         StoredRun run = new StoredRun();
         run.completedAt = Instant.now().toEpochMilli();
-        run.profile = profile;
+        run.profile = JadeProfile.fromKey(profile).key();
         run.order = tracker.observedOrder().stream().map(Crystal::name).toList();
         run.segments = new LinkedHashMap<>();
         for (Crystal crystal : tracker.observedOrder()) {
@@ -98,9 +102,17 @@ public final class LifetimeStatsStore {
         return oldValue <= 0 ? newValue : Math.min(oldValue, newValue);
     }
 
-    public record Snapshot(Map<Crystal, Long> segments, long nucleusSegment, long fullRun, int runs) {
+    private static boolean matchesProfile(String requested, String stored) {
+        if (stored == null || stored.isBlank() || "unclassified".equals(stored)) {
+            return JadeProfile.PREPARED.key().equals(requested);
+        }
+        return requested.equals(stored);
+    }
+
+    public record Snapshot(Map<Crystal, Long> segments, long nucleusSegment, long fullRun,
+                           long averageRun, int runs) {
         public static Snapshot empty() {
-            return new Snapshot(Map.of(), 0, 0, 0);
+            return new Snapshot(Map.of(), 0, 0, 0, 0);
         }
 
         public long segment(Crystal crystal) {

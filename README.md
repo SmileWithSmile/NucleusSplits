@@ -18,13 +18,13 @@ Supports Minecraft 26.1.x. Requires Fabric Loader 0.19.3+, Fabric API and Java 2
 * Moving to another Crystal Hollows server resets the session route and session bests. Lifetime history is kept.
 * Original Hypixel crystal messages and compacted messages from mods such as SkyHanni are both recognised.
 
-## Session and lifetime
+## Session and all-time
 
-Open chat, your inventory or another screen to reveal the `SESSION / LIFETIME` switch under the splits.
+Open chat, your inventory or another screen to reveal the `SESSION / ALL-TIME` switch under the splits.
 
 * `SESSION` compares against the best segment times from the current Crystal Hollows lobby.
-* `LIFETIME` compares against the best segment times saved across game restarts and shows the best complete run in
-  the header.
+* `ALL-TIME` compares against the best segment times saved across game restarts.
+* Both views show the average completed run (`AVG`) and the best complete run (`PB`) for the selected Jade profile.
 
 Every clean completed run is stored in `config/nucleus-splits-history.json`. The file contains the crystal order,
 individual segment times, Nucleus return time and total time; it does not contain chat history or player data.
@@ -42,7 +42,10 @@ Replies are sent through `/pc`, spread over 0.5-2.5 seconds using the player's U
 30 seconds. Guild, private and public chat do not trigger it. A player without a recorded run replies that no PB has
 been completed yet.
 
-## HUD editor and commands
+## Settings menu, HUD editor and commands
+
+`/nucleussplits` opens the main settings menu. The short aliases `/nc` and `/ns` open the same screen. Use it to
+switch the Jade route, choose the default Session / All-time comparison and view both average run times.
 
 `/nc gui` opens the position editor, based on SkyHanni's HUD editing controls:
 
@@ -51,10 +54,9 @@ been completed yet.
 * right-click them to reset position and scale;
 * press Done or Escape to save and close.
 
-The long command `/nucleussplits` and the aliases `/nc` and `/ns` provide the same subcommands.
-
 Command | Meaning
 --- | ---
+`/nucleussplits`, `/nc`, `/ns` | open the settings and statistics menu
 `/nc gui` | open the HUD position and scale editor
 `/nc reset` | forget the learned lobby route and reset the current run
 `/nc preview` | show or hide a sample HUD outside a run
@@ -70,15 +72,16 @@ Key | Default | Meaning
 `x` | `8` | horizontal HUD position in scaled GUI pixels
 `y` | `8` | vertical HUD position in scaled GUI pixels
 `scalePercent` | `100` | HUD scale, clamped from 50 to 200
-`statsView` | `SESSION` | selected comparison: `SESSION` or `LIFETIME`
-`runProfile` | `unclassified` | reserved history profile for separating Jade strategies later
+`statsView` | `SESSION` | selected comparison: `SESSION` or `LIFETIME` (`ALL-TIME` in the HUD)
+`runProfile` | `prepared_jade` | selected Jade route: `prepared_jade` or `in_run_jade`
 
 ## Prepared Jade and in-run Jade
 
 Jade can be routed with prepared materials or with materials collected during the timed run. Those strategies should
-not share a full-run leaderboard, but duplicating the whole HUD is unnecessary. History already stores a profile on
-every run. A future version can add a `Prepared Jade / In-run Jade` selector and filter the same lifetime display,
-without discarding existing `unclassified` runs.
+not share a full-run leaderboard. Select `Prepared materials` or `Collect materials during run` in the settings menu.
+Session bests, all-time bests, average times, run counts and `!nucpb` responses are filtered to that profile. The
+profile is locked when a run starts, so changing the menu during a run cannot file it under the wrong strategy.
+Existing `unclassified` runs from version 0.3.0 appear under Prepared Jade.
 
 ## Detection and limitations
 
@@ -93,7 +96,7 @@ described above, after another party member explicitly sends `!nucpb`.
 
 1. Install Fabric Loader 0.19.3 or newer for Minecraft 26.1.x.
 2. Put Fabric API and the matching Nucleus Splits jar in the Minecraft `mods` folder.
-3. Start the game and use `/nc gui` to place the HUD.
+3. Start the game, use `/nucleussplits` to choose the Jade route, then use `/nc gui` to place the HUD.
 
 Download release jars from the repository's Releases page. Do not use the `-sources` jar.
 
