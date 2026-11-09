@@ -116,10 +116,6 @@ Nucleus Splits observes movement and server messages. It does not move the playe
 the run. Party PB sharing sends one ordinary party message a player could type themselves, only after an explicit
 party request. Whether a mod is suitable for the way you play is ultimately your responsibility.
 
-## Licence
-
-Copyright (C) 2026 Konstantin Soldatov. All rights reserved. See `LICENSE`.
-
 ## Something broken?
 
 Send `logs/latest.log` from your game folder to soldey on Discord immediately after the problem happens; the file is
