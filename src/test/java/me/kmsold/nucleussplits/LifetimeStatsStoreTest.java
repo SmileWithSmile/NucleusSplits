@@ -3,6 +3,7 @@ package me.kmsold.nucleussplits;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -27,9 +28,40 @@ class LifetimeStatsStoreTest {
         assertEquals(9_000, prepared.segment(Crystal.JADE));
         assertEquals(54_000, prepared.fullRun());
         assertEquals(57_000, prepared.averageRun());
+        assertEquals(2, prepared.averageRuns());
         assertEquals(1, inRun.runs());
         assertEquals(60_000, inRun.fullRun());
         assertEquals(60_000, inRun.averageRun());
+
+        LifetimeStatsStore reloaded = LifetimeStatsStore.load(file);
+        LifetimeStatsStore.RunEntry fastest = reloaded.runs(JadeProfile.PREPARED.key()).getFirst();
+        reloaded.setIncludedInAverage(fastest.historyIndex(), false);
+        LifetimeStatsStore.Snapshot edited = LifetimeStatsStore.load(file).snapshot(JadeProfile.PREPARED.key());
+        assertEquals(60_000, edited.averageRun());
+        assertEquals(1, edited.averageRuns());
+        assertEquals(54_000, edited.fullRun());
+    }
+
+    @Test
+    void oldHistoryWithoutAverageFlagRemainsIncluded() throws Exception {
+        Path file = temporaryDirectory.resolve("legacy-history.json");
+        Files.writeString(file, """
+                {
+                  "schemaVersion": 1,
+                  "runs": [{
+                    "completedAt": 1,
+                    "profile": "unclassified",
+                    "segments": {},
+                    "nucleusSegment": 1000,
+                    "totalTime": 120000
+                  }]
+                }
+                """);
+
+        LifetimeStatsStore.Snapshot snapshot = LifetimeStatsStore.load(file)
+                .snapshot(JadeProfile.PREPARED.key());
+        assertEquals(120_000, snapshot.averageRun());
+        assertEquals(1, snapshot.averageRuns());
     }
 
     private static NucleusRunTracker finishedRun(long start, long segment) {

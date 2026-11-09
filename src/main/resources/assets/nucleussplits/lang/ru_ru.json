@@ -5,6 +5,7 @@
   "nucleussplits.command.scale": "Масштаб HUD: %s%%",
   "nucleussplits.command.preview.on": "Предпросмотр HUD включён.",
   "nucleussplits.command.preview.off": "Предпросмотр HUD выключен.",
+  "nucleussplits.command.afk_stopped": "Ран остановлен по AFK-лимиту (%s) и не записан.",
   "nucleussplits.gui.title": "Редактор позиции Nucleus Splits",
   "nucleussplits.gui.drag": "Перетаскивай окно сплитов левой кнопкой мыши",
   "nucleussplits.gui.scroll": "Крути колёсико над окном для масштаба — %s%%",
@@ -17,8 +18,15 @@
   "nucleussplits.menu.alltime_avg": "Среднее время за всё время",
   "nucleussplits.menu.no_runs": "Нет завершённых ранов",
   "nucleussplits.menu.edit_hud": "Позиция и масштаб HUD",
+  "nucleussplits.menu.avg_runs": "Раны для AVG — включить или исключить",
+  "nucleussplits.menu.afk_limit": "AFK-лимит: 1,5× AVG, максимум 08:00",
   "nucleussplits.profile.prepared": "Материалы подготовлены",
   "nucleussplits.profile.in_run": "Материалы собираются в ране",
   "nucleussplits.view.session": "Сессия",
-  "nucleussplits.view.alltime": "Всё время"
+  "nucleussplits.view.alltime": "Всё время",
+  "nucleussplits.avg.title": "Раны, учитываемые в AVG",
+  "nucleussplits.avg.subtitle": "Маршрут Jade: %s — нажми на ран для переключения",
+  "nucleussplits.avg.summary": "Учитывается в AVG: %s / %s",
+  "nucleussplits.avg.included": "УЧИТЫВАЕТСЯ",
+  "nucleussplits.avg.excluded": "ИСКЛЮЧЁН"
 }

@@ -85,6 +85,19 @@ class NucleusRunTrackerTest {
     }
 
     @Test
+    void abortedRunStopsElapsedTimeAndCannotComplete() {
+        NucleusRunTracker tracker = new NucleusRunTracker();
+        tracker.onNucleusExit(1_000);
+
+        assertTrue(tracker.abort(31_000));
+        assertEquals(NucleusRunTracker.State.ABORTED, tracker.state());
+        assertEquals(30_000, tracker.elapsed(90_000));
+        assertFalse(tracker.cleanFinish());
+        assertFalse(tracker.onNucleusCompleted(100_000));
+        assertEquals(0, tracker.totalTime());
+    }
+
+    @Test
     void nucleusBoundsIncludeDocumentedAreaEdges() {
         assertTrue(NucleusArea.contains(465, 64, 465));
         assertTrue(NucleusArea.contains(561, 188, 561));

@@ -20,7 +20,7 @@ class PartyPbChatTest {
 
     @Test
     void formatsLifetimePbAndEmptyHistory() {
-        var pb = new LifetimeStatsStore.Snapshot(Map.of(), 0, 207_650, 215_000, 12);
+        var pb = new LifetimeStatsStore.Snapshot(Map.of(), 0, 207_650, 215_000, 12, 10);
         assertEquals("Nucleus PB: 03:27.65 (12 runs)", PartyPbChat.response(pb));
         assertEquals("Nucleus PB: no completed runs yet", PartyPbChat.response(LifetimeStatsStore.Snapshot.empty()));
     }

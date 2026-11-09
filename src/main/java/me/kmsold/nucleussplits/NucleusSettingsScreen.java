@@ -41,12 +41,16 @@ final class NucleusSettingsScreen extends Screen {
             minecraft.setScreen(new NucleusSettingsScreen(settings, sessionStore, lifetimeStore));
         }).size(250, 20).pos(center - 125, 88).build());
 
+        addRenderableWidget(Button.builder(Component.translatable("nucleussplits.menu.avg_runs"), button ->
+                minecraft.setScreen(new NucleusAverageScreen(this, lifetimeStore, settings.runProfile, 0)))
+                .size(250, 20).pos(center - 125, 112).build());
+
         addRenderableWidget(Button.builder(Component.translatable("nucleussplits.menu.edit_hud"), button ->
                 minecraft.setScreen(new NucleusConfigScreen(
                         NucleusSplits.tracker(), settings,
                         sessionStore.snapshot(settings.runProfile),
                         lifetimeStore.snapshot(settings.runProfile), this)))
-                .size(250, 20).pos(center - 125, 154).build());
+                .size(250, 20).pos(center - 125, 176).build());
 
         addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> onClose())
                 .size(100, 20).pos(center - 50, height - 28).build());
@@ -63,20 +67,26 @@ final class NucleusSettingsScreen extends Screen {
 
         LifetimeStatsStore.Snapshot session = sessionStore.snapshot(settings.runProfile);
         LifetimeStatsStore.Snapshot allTime = lifetimeStore.snapshot(settings.runProfile);
-        drawAverage(graphics, "nucleussplits.menu.session_avg", session, 116);
-        drawAverage(graphics, "nucleussplits.menu.alltime_avg", allTime, 130);
+        graphics.centeredText(font, Component.translatable("nucleussplits.menu.afk_limit"),
+                width / 2, 130, GRAY);
+        drawAverage(graphics, "nucleussplits.menu.session_avg", session, 142);
+        drawAverage(graphics, "nucleussplits.menu.alltime_avg", allTime, 156);
     }
 
     private void drawAverage(GuiGraphicsExtractor graphics, String key,
                              LifetimeStatsStore.Snapshot snapshot, int y) {
         Component label = Component.translatable(key);
-        String value = snapshot.runs() == 0
-                ? Component.translatable("nucleussplits.menu.no_runs").getString()
-                : NucleusSplitsHud.format(snapshot.averageRun()) + "  (" + snapshot.runs() + ")";
+        String value;
+        if (snapshot.runs() == 0) {
+            value = Component.translatable("nucleussplits.menu.no_runs").getString();
+        } else {
+            String average = snapshot.averageRuns() == 0 ? "--:--.--" : NucleusSplitsHud.format(snapshot.averageRun());
+            value = average + "  (" + snapshot.averageRuns() + "/" + snapshot.runs() + ")";
+        }
         int labelX = width / 2 - 125;
         graphics.text(font, label, labelX, y, WHITE, false);
         graphics.text(font, value, width / 2 + 125 - font.width(value), y,
-                snapshot.runs() == 0 ? GRAY : GREEN, false);
+                snapshot.averageRuns() == 0 ? GRAY : GREEN, false);
     }
 
     private Component profileButtonText() {

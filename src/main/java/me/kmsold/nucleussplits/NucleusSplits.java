@@ -50,7 +50,8 @@ public final class NucleusSplits implements ClientModInitializer {
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> resetConnection());
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> resetConnection());
         ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
-            if (screen instanceof NucleusConfigScreen || screen instanceof NucleusSettingsScreen) return;
+            if (screen instanceof NucleusConfigScreen || screen instanceof NucleusSettingsScreen
+                    || screen instanceof NucleusAverageScreen) return;
             ScreenMouseEvents.allowMouseClick(screen).register((ignored, click) ->
                     !NucleusSplitsHud.handleViewClick(click.x(), click.y(), click.button(), TRACKER, settings, preview));
             ScreenEvents.afterExtract(screen).register((ignored, graphics, mouseX, mouseY, delta) ->
@@ -160,6 +161,7 @@ public final class NucleusSplits implements ClientModInitializer {
             LOGGER.info("Nucleus run {} started on area exit", TRACKER.runNumber());
         }
         wasInNucleus = inside;
+        stopAfkRunIfNeeded();
     }
 
     private static boolean onGameMessage(Component message, boolean overlay) {
@@ -196,8 +198,8 @@ public final class NucleusSplits implements ClientModInitializer {
                 LOGGER.info("Nucleus run {} finished: crystals={} clean={} mismatch={}", TRACKER.runNumber(),
                         TRACKER.observedOrder(), TRACKER.cleanFinish(), TRACKER.routeMismatch());
                 String profile = activeRunProfile == null ? settings.runProfile : activeRunProfile;
-                SESSION_STATS.record(TRACKER, profile);
-                lifetimeStore.record(TRACKER, profile);
+                long completedAt = lifetimeStore.record(TRACKER, profile);
+                if (completedAt >= 0) SESSION_STATS.record(TRACKER, profile, completedAt);
                 updateDisplayedRunStats(profile);
             }
         }
@@ -261,6 +263,27 @@ public final class NucleusSplits implements ClientModInitializer {
         }
     }
 
+    static void averageSelectionChanged(LifetimeStatsStore.RunEntry run, boolean included) {
+        lifetimeStore.setIncludedInAverage(run.historyIndex(), included);
+        SESSION_STATS.setIncludedInAverage(run.completedAt(), included);
+        if (TRACKER.state() != NucleusRunTracker.State.RUNNING) {
+            refreshComparisons(settings.runProfile);
+        }
+    }
+
+    private static void stopAfkRunIfNeeded() {
+        if (TRACKER.state() != NucleusRunTracker.State.RUNNING) return;
+        long average = lifetimeComparison.averageRun() > 0
+                ? lifetimeComparison.averageRun() : sessionComparison.averageRun();
+        long limit = AfkRunPolicy.limit(lifetimeComparison.averageRun(), sessionComparison.averageRun());
+        long current = now();
+        if (TRACKER.elapsed(current) <= limit || !TRACKER.abort(current)) return;
+        LOGGER.info("Nucleus run {} stopped by AFK cutoff at {} (AVG {}, limit {})",
+                TRACKER.runNumber(), NucleusSplitsHud.format(TRACKER.elapsed(current)),
+                NucleusSplitsHud.format(average), NucleusSplitsHud.format(limit));
+        tell("nucleussplits.command.afk_stopped", NucleusSplitsHud.format(limit));
+    }
+
     private static void refreshComparisons(String profile) {
         sessionComparison = SESSION_STATS.snapshot(profile);
         lifetimeComparison = lifetimeStore.snapshot(profile);
@@ -277,7 +300,7 @@ public final class NucleusSplits implements ClientModInitializer {
             LifetimeStatsStore.Snapshot comparison, LifetimeStatsStore.Snapshot updated) {
         return new LifetimeStatsStore.Snapshot(
                 comparison.segments(), comparison.nucleusSegment(), updated.fullRun(),
-                updated.averageRun(), updated.runs());
+                updated.averageRun(), updated.runs(), updated.averageRuns());
     }
 
     private static String displayProfile() {

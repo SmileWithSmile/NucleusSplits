@@ -39,6 +39,10 @@ public final class LifetimeStatsStore {
             Data loaded = GSON.fromJson(reader, Data.class);
             if (loaded == null) loaded = new Data();
             if (loaded.runs == null) loaded.runs = new ArrayList<>();
+            loaded.schemaVersion = 2;
+            for (StoredRun run : loaded.runs) {
+                if (run.includedInAverage == null) run.includedInAverage = true;
+            }
             return new LifetimeStatsStore(loaded, file);
         } catch (Exception exception) {
             NucleusSplits.LOGGER.warn("Could not read lifetime history {}, using an empty history", file, exception);
@@ -53,6 +57,7 @@ public final class LifetimeStatsStore {
         long fullRun = 0;
         long totalTime = 0;
         int count = 0;
+        int averageCount = 0;
         for (StoredRun run : data.runs) {
             if (!matchesProfile(canonicalProfile, run.profile)) continue;
             count++;
@@ -64,14 +69,17 @@ public final class LifetimeStatsStore {
             }
             nucleus = minPositive(nucleus, run.nucleusSegment);
             fullRun = minPositive(fullRun, run.totalTime);
-            totalTime += Math.max(0, run.totalTime);
+            if (included(run) && run.totalTime > 0) {
+                totalTime += run.totalTime;
+                averageCount++;
+            }
         }
-        long averageRun = count == 0 ? 0 : totalTime / count;
-        return new Snapshot(segments, nucleus, fullRun, averageRun, count);
+        long averageRun = averageCount == 0 ? 0 : totalTime / averageCount;
+        return new Snapshot(segments, nucleus, fullRun, averageRun, count, averageCount);
     }
 
-    public void record(NucleusRunTracker tracker, String profile) {
-        if (!tracker.cleanFinish() || tracker.state() != NucleusRunTracker.State.FINISHED) return;
+    public long record(NucleusRunTracker tracker, String profile) {
+        if (!tracker.cleanFinish() || tracker.state() != NucleusRunTracker.State.FINISHED) return -1;
         StoredRun run = new StoredRun();
         run.completedAt = Instant.now().toEpochMilli();
         run.profile = JadeProfile.fromKey(profile).key();
@@ -82,7 +90,27 @@ public final class LifetimeStatsStore {
         }
         run.nucleusSegment = tracker.nucleusSegment();
         run.totalTime = tracker.totalTime();
+        run.includedInAverage = true;
         data.runs.add(run);
+        save();
+        return run.completedAt;
+    }
+
+    public List<RunEntry> runs(String profile) {
+        String canonicalProfile = JadeProfile.fromKey(profile).key();
+        List<RunEntry> result = new ArrayList<>();
+        for (int index = 0; index < data.runs.size(); index++) {
+            StoredRun run = data.runs.get(index);
+            if (!matchesProfile(canonicalProfile, run.profile)) continue;
+            result.add(new RunEntry(index, run.completedAt, run.totalTime, included(run)));
+        }
+        result.sort((left, right) -> Long.compare(right.completedAt, left.completedAt));
+        return List.copyOf(result);
+    }
+
+    public void setIncludedInAverage(int historyIndex, boolean included) {
+        if (historyIndex < 0 || historyIndex >= data.runs.size()) return;
+        data.runs.get(historyIndex).includedInAverage = included;
         save();
     }
 
@@ -109,10 +137,14 @@ public final class LifetimeStatsStore {
         return requested.equals(stored);
     }
 
+    private static boolean included(StoredRun run) {
+        return run.includedInAverage == null || run.includedInAverage;
+    }
+
     public record Snapshot(Map<Crystal, Long> segments, long nucleusSegment, long fullRun,
-                           long averageRun, int runs) {
+                           long averageRun, int runs, int averageRuns) {
         public static Snapshot empty() {
-            return new Snapshot(Map.of(), 0, 0, 0, 0);
+            return new Snapshot(Map.of(), 0, 0, 0, 0, 0);
         }
 
         public long segment(Crystal crystal) {
@@ -120,8 +152,10 @@ public final class LifetimeStatsStore {
         }
     }
 
+    public record RunEntry(int historyIndex, long completedAt, long totalTime, boolean includedInAverage) {}
+
     private static final class Data {
-        int schemaVersion = 1;
+        int schemaVersion = 2;
         List<StoredRun> runs = new ArrayList<>();
     }
 
@@ -132,5 +166,6 @@ public final class LifetimeStatsStore {
         Map<String, Long> segments = Map.of();
         long nucleusSegment;
         long totalTime;
+        Boolean includedInAverage = true;
     }
 }

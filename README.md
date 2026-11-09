@@ -26,6 +26,14 @@ Open chat, your inventory or another screen to reveal the `SESSION / ALL-TIME` s
 * `ALL-TIME` compares against the best segment times saved across game restarts.
 * Both views show the average completed run (`AVG`) and the best complete run (`PB`) for the selected Jade profile.
 
+The settings menu contains an `AVG runs` editor. It lists every completed run for the selected Jade profile and lets
+you include or exclude each result from both session and all-time AVG. Excluding a run does not delete it and does not
+change PBs or best segment comparisons.
+
+To keep AFK time out of the history, an active timer stops at the earlier of `1.5 × all-time AVG` and `08:00`. If no
+all-time average exists, session AVG is used. If both averages are empty, the hard `08:00` limit still applies. A run
+stopped this way is not saved and cannot affect PB, AVG or run count.
+
 Every clean completed run is stored in `config/nucleus-splits-history.json`. The file contains the crystal order,
 individual segment times, Nucleus return time and total time; it does not contain chat history or player data.
 
@@ -45,7 +53,8 @@ been completed yet.
 ## Settings menu, HUD editor and commands
 
 `/nucleussplits` opens the main settings menu. The short aliases `/nc` and `/ns` open the same screen. Use it to
-switch the Jade route, choose the default Session / All-time comparison and view both average run times.
+switch the Jade route, choose the default Session / All-time comparison, view both averages and edit which runs are
+included in AVG.
 
 `/nc gui` opens the position editor, based on SkyHanni's HUD editing controls:
 

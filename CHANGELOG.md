@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0
+
+* Stop and discard AFK runs at the earlier of `1.5 × all-time AVG` and 8 minutes.
+* Fall back to session AVG when an all-time average is unavailable; use 8 minutes when both averages are empty.
+* Add an `AVG runs` editor with a paginated list of every run in the selected Jade profile.
+* Include or exclude individual runs from session/all-time AVG without deleting them or changing PBs.
+* Treat the new `includedInAverage` history field as enabled for existing saved runs.
+
 ## 0.4.0
 
 * Open the settings menu with `/nucleussplits`, `/nc` or `/ns`.

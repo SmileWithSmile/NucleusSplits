@@ -1,37 +1,63 @@
 package me.kmsold.nucleussplits;
 
+import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-/** In-memory aggregates for the current Crystal Hollows lobby, separated by Jade profile. */
+/** In-memory run history for the current Crystal Hollows lobby, separated by Jade profile. */
 final class SessionStatsStore {
-    private final Map<String, Aggregate> profiles = new HashMap<>();
+    private final List<SessionRun> runs = new ArrayList<>();
 
     LifetimeStatsStore.Snapshot snapshot(String profile) {
-        Aggregate aggregate = profiles.get(JadeProfile.fromKey(profile).key());
-        if (aggregate == null) return LifetimeStatsStore.Snapshot.empty();
-        long average = aggregate.runs == 0 ? 0 : aggregate.totalTime / aggregate.runs;
+        String canonicalProfile = JadeProfile.fromKey(profile).key();
+        EnumMap<Crystal, Long> segments = new EnumMap<>(Crystal.class);
+        long nucleus = 0;
+        long fullRun = 0;
+        long totalTime = 0;
+        int count = 0;
+        int averageCount = 0;
+        for (SessionRun run : runs) {
+            if (!canonicalProfile.equals(run.profile)) continue;
+            count++;
+            for (Map.Entry<Crystal, Long> segment : run.segments.entrySet()) {
+                segments.merge(segment.getKey(), segment.getValue(), Math::min);
+            }
+            nucleus = minPositive(nucleus, run.nucleusSegment);
+            fullRun = minPositive(fullRun, run.totalTime);
+            if (run.includedInAverage) {
+                totalTime += run.totalTime;
+                averageCount++;
+            }
+        }
+        long average = averageCount == 0 ? 0 : totalTime / averageCount;
         return new LifetimeStatsStore.Snapshot(
-                Map.copyOf(aggregate.segments), aggregate.nucleusSegment,
-                aggregate.fullRun, average, aggregate.runs);
+                Map.copyOf(segments), nucleus, fullRun, average, count, averageCount);
     }
 
-    void record(NucleusRunTracker tracker, String profile) {
+    void record(NucleusRunTracker tracker, String profile, long completedAt) {
         if (!tracker.cleanFinish() || tracker.state() != NucleusRunTracker.State.FINISHED) return;
-        Aggregate aggregate = profiles.computeIfAbsent(
-                JadeProfile.fromKey(profile).key(), ignored -> new Aggregate());
+        EnumMap<Crystal, Long> segments = new EnumMap<>(Crystal.class);
         for (Crystal crystal : tracker.observedOrder()) {
-            aggregate.segments.merge(crystal, tracker.segmentTime(crystal, 0), Math::min);
+            segments.put(crystal, tracker.segmentTime(crystal, 0));
         }
-        aggregate.nucleusSegment = minPositive(aggregate.nucleusSegment, tracker.nucleusSegment());
-        aggregate.fullRun = minPositive(aggregate.fullRun, tracker.totalTime());
-        aggregate.totalTime += tracker.totalTime();
-        aggregate.runs++;
+        runs.add(new SessionRun(completedAt, JadeProfile.fromKey(profile).key(),
+                Map.copyOf(segments), tracker.nucleusSegment(), tracker.totalTime(), true));
+    }
+
+    void setIncludedInAverage(long completedAt, boolean included) {
+        for (int index = 0; index < runs.size(); index++) {
+            SessionRun run = runs.get(index);
+            if (run.completedAt == completedAt) {
+                runs.set(index, new SessionRun(run.completedAt, run.profile, run.segments,
+                        run.nucleusSegment, run.totalTime, included));
+                return;
+            }
+        }
     }
 
     void reset() {
-        profiles.clear();
+        runs.clear();
     }
 
     private static long minPositive(long oldValue, long newValue) {
@@ -39,11 +65,6 @@ final class SessionStatsStore {
         return oldValue <= 0 ? newValue : Math.min(oldValue, newValue);
     }
 
-    private static final class Aggregate {
-        final EnumMap<Crystal, Long> segments = new EnumMap<>(Crystal.class);
-        long nucleusSegment;
-        long fullRun;
-        long totalTime;
-        int runs;
-    }
+    private record SessionRun(long completedAt, String profile, Map<Crystal, Long> segments,
+                              long nucleusSegment, long totalTime, boolean includedInAverage) {}
 }

@@ -10,7 +10,7 @@ import java.util.Set;
 
 /** Pure timer state; Minecraft hooks only translate movement and chat into these events. */
 public final class NucleusRunTracker {
-    public enum State { WAITING_FOR_EXIT, RUNNING, FINISHED }
+    public enum State { WAITING_FOR_EXIT, RUNNING, FINISHED, ABORTED }
 
     private State state = State.WAITING_FOR_EXIT;
     private final List<Crystal> referenceOrder = new ArrayList<>();
@@ -72,6 +72,14 @@ public final class NucleusRunTracker {
         return true;
     }
 
+    public boolean abort(long nowMillis) {
+        if (state != State.RUNNING) return false;
+        finishMillis = elapsed(nowMillis);
+        cleanFinish = false;
+        state = State.ABORTED;
+        return true;
+    }
+
     private void clearRun() {
         observedOrder.clear();
         observed.clear();
@@ -111,7 +119,7 @@ public final class NucleusRunTracker {
 
     public long elapsed(long nowMillis) {
         if (startMillis == 0) return 0;
-        return state == State.FINISHED ? finishMillis : Math.max(0, nowMillis - startMillis);
+        return state == State.RUNNING ? Math.max(0, nowMillis - startMillis) : finishMillis;
     }
 
     public long segmentTime(Crystal crystal, long nowMillis) {

@@ -8,13 +8,18 @@ class SessionStatsStoreTest {
     @Test
     void keepsProfileAveragesSeparateAndResetsWithLobby() {
         SessionStatsStore store = new SessionStatsStore();
-        store.record(finishedRun(1_000, 10_000), JadeProfile.PREPARED.key());
-        store.record(finishedRun(100_000, 8_000), JadeProfile.PREPARED.key());
-        store.record(finishedRun(200_000, 20_000), JadeProfile.IN_RUN.key());
+        store.record(finishedRun(1_000, 10_000), JadeProfile.PREPARED.key(), 1);
+        store.record(finishedRun(100_000, 8_000), JadeProfile.PREPARED.key(), 2);
+        store.record(finishedRun(200_000, 20_000), JadeProfile.IN_RUN.key(), 3);
 
         assertEquals(54_000, store.snapshot(JadeProfile.PREPARED.key()).averageRun());
         assertEquals(2, store.snapshot(JadeProfile.PREPARED.key()).runs());
         assertEquals(120_000, store.snapshot(JadeProfile.IN_RUN.key()).averageRun());
+
+        store.setIncludedInAverage(2, false);
+        assertEquals(60_000, store.snapshot(JadeProfile.PREPARED.key()).averageRun());
+        assertEquals(1, store.snapshot(JadeProfile.PREPARED.key()).averageRuns());
+        assertEquals(48_000, store.snapshot(JadeProfile.PREPARED.key()).fullRun());
 
         store.reset();
         assertEquals(0, store.snapshot(JadeProfile.PREPARED.key()).runs());

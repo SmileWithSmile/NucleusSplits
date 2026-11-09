@@ -70,7 +70,8 @@ final class NucleusSplitsHud {
         drawNucleusRow(graphics, font, tracker, y, nowMillis, preview, comparison);
         y += 11;
         int timerColor = tracker.state() == NucleusRunTracker.State.FINISHED
-                ? (tracker.cleanFinish() && !tracker.routeMismatch() ? GREEN : RED) : YELLOW;
+                ? (tracker.cleanFinish() && !tracker.routeMismatch() ? GREEN : RED)
+                : (tracker.state() == NucleusRunTracker.State.ABORTED ? RED : YELLOW);
         graphics.text(font, format(tracker.elapsed(nowMillis)), 5, y, timerColor, true);
 
         if (showToggle) drawViewToggle(graphics, font, settings.statsView);
@@ -151,6 +152,7 @@ final class NucleusSplitsHud {
     private static String status(NucleusRunTracker tracker, boolean preview, StatsView view, String profile) {
         String mode = view == StatsView.SESSION ? "session" : "all-time";
         if (preview && tracker.state() == NucleusRunTracker.State.WAITING_FOR_EXIT) return "Preview • " + mode;
+        if (tracker.state() == NucleusRunTracker.State.ABORTED) return "Run " + tracker.runNumber() + " • AFK stopped";
         if (tracker.referenceOrder().isEmpty()) return "Run " + tracker.runNumber() + " • learning • " + mode;
         if (tracker.routeMismatch()) return "Run " + tracker.runNumber() + " • changed • " + mode;
         return "Run " + tracker.runNumber() + " • " + mode;

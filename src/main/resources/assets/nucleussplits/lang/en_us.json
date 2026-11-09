@@ -5,6 +5,7 @@
   "nucleussplits.command.scale": "HUD scale: %s%%",
   "nucleussplits.command.preview.on": "HUD preview enabled.",
   "nucleussplits.command.preview.off": "HUD preview disabled.",
+  "nucleussplits.command.afk_stopped": "Run stopped at the AFK limit (%s) and was not recorded.",
   "nucleussplits.gui.title": "Nucleus Splits Position Editor",
   "nucleussplits.gui.drag": "Drag the splits with left mouse button",
   "nucleussplits.gui.scroll": "Scroll over it to resize — %s%%",
@@ -17,8 +18,15 @@
   "nucleussplits.menu.alltime_avg": "All-time average run",
   "nucleussplits.menu.no_runs": "No completed runs",
   "nucleussplits.menu.edit_hud": "Edit HUD position and scale",
+  "nucleussplits.menu.avg_runs": "AVG runs — include or exclude",
+  "nucleussplits.menu.afk_limit": "AFK cutoff: 1.5× AVG, hard limit 08:00",
   "nucleussplits.profile.prepared": "Prepared materials",
   "nucleussplits.profile.in_run": "Collect materials during run",
   "nucleussplits.view.session": "Session",
-  "nucleussplits.view.alltime": "All-time"
+  "nucleussplits.view.alltime": "All-time",
+  "nucleussplits.avg.title": "Runs used for AVG",
+  "nucleussplits.avg.subtitle": "Jade route: %s — click a run to toggle it",
+  "nucleussplits.avg.summary": "Included in AVG: %s / %s",
+  "nucleussplits.avg.included": "INCLUDED",
+  "nucleussplits.avg.excluded": "EXCLUDED"
 }
